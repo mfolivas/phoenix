@@ -5,7 +5,7 @@ Defines an abstract interface for entity extraction.
 
 from abc import ABC, abstractmethod
 from typing import List, Tuple
-from domain.entities import Entity, Relationship
+from src.domain.entities import Entity, Relationship
 
 class ExtractionService(ABC):
     """

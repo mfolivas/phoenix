@@ -41,8 +41,9 @@ def test_entity_extraction(project_phoenix_plan_text):
     }
     response = client.post("/extract", json=payload)
     assert response.status_code == 200
-    
+
     data = response.json()
     assert "entities" in data
+    # Ensure that at least one entity is extracted
     assert len(data["entities"]) > 0
     logger.info("Test successful: %d entities extracted.", len(data["entities"]))

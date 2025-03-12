@@ -19,6 +19,7 @@ This project is a proof-of-concept (POC) for extracting entities and relationshi
 1. **Install dependencies:**
     ```bash
     pip install -r requirements.txt
+    python -m spacy download en_core_web_md
     ```
 2. **Run the FastAPI server:**
     ```bash
@@ -31,3 +32,4 @@ This project is a proof-of-concept (POC) for extracting entities and relationshi
 Run tests with:
 ```bash
 pytest tests/
+

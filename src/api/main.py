@@ -7,8 +7,9 @@ import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-from domain.entities import Entity, Relationship
-from infrastructure.local_extraction import LocalExtractor
+from src.domain.entities import Entity, Relationship
+from src.infrastructure.local_extraction import LocalExtractor
+from src.config.config import SPACY_MODEL
 
 # Configure logging for the application
 logging.basicConfig(
@@ -43,8 +44,8 @@ class ExtractionResponse(BaseModel):
     entities: List[Entity]
     relationships: List[Relationship]
 
-# Instantiate our spaCy-based extraction service.
-extraction_service = LocalExtractor()
+# Instantiate our spaCy-based extraction service with config
+extraction_service = LocalExtractor(config={"spacy_model": SPACY_MODEL})
 
 @app.post("/extract", response_model=ExtractionResponse)
 async def extract_entities(request: ExtractionRequest):
