@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+spacy
+pdfminer.six
+pytest
+pytest-cov
+boto3
