@@ -8,3 +8,4 @@ pdfminer.six
 pytest
 pytest-cov
 boto3
+python-multipart

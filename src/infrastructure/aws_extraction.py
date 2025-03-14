@@ -5,8 +5,8 @@ Provides an AWS Comprehend-based implementation of the ExtractionService.
 
 import boto3
 import logging
-from domain.services import ExtractionService
-from domain.entities import Entity, Relationship
+from src.domain.services import ExtractionService
+from src.domain.entities import Entity, Relationship
 
 # Get a logger for this module
 logger = logging.getLogger(__name__)
