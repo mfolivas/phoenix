@@ -1,6 +1,8 @@
 # Entity Extraction Application
 
-This project is a proof-of-concept (POC) for extracting named entities and their relationships from unstructured text/Markdown files. It is built with FastAPI, uses spaCy for Named Entity Recognition (NER), and implements a simple heuristic for relationship identification. The code follows Domain-Driven Design (DDD), SOLID principles, and Test-Driven Development (TDD) best practices.
+This project is a proof-of-concept (POC) for extracting named entities and their relationships from unstructured text/Markdown files. It is built with FastAPI and uses spaCy for Named Entity Recognition (NER). Our design follows Domain-Driven Design (DDD), SOLID principles, and Test-Driven Development (TDD) best practices.
+
+> **Note:** The default spaCy model (`en_core_web_md`) may misclassify some entities (e.g., "São Paulo" as a PERSON). This README explains how you can train a custom NER model with your own annotated data to better capture domain-specific entities like locations and employee counts.
 
 ---
 
@@ -12,7 +14,7 @@ This project is a proof-of-concept (POC) for extracting named entities and their
 4. [Installation](#installation)
 5. [Running the Application](#running-the-application)
 6. [API Usage](#api-usage)
-7. [Example Using docs/ProjectPhoenixPlan.md](#example-using-docsprojectphoenixplanmd)
+7. [Custom NER Model Training](#custom-ner-model-training)
 8. [Running Tests](#running-tests)
 9. [Docker Support](#docker-support)
 10. [Additional Notes](#additional-notes)
@@ -22,19 +24,28 @@ This project is a proof-of-concept (POC) for extracting named entities and their
 ## 1. Overview
 
 The goal of this application is to:
-- Extract entities (such as people, organizations, and locations) from unstructured text/Markdown files.
+- Extract entities (e.g., people, organizations, locations, employee counts) from unstructured text/Markdown files.
 - Identify relationships between these entities based on their proximity in sentences.
-- Provide an API endpoint that accepts text/Markdown input and returns the extracted entities and relationships in a structured JSON format.
+- Provide an API endpoint that accepts a file upload and returns the extracted entities and relationships in a structured JSON format.
 
 ---
 
 ## 2. Features
 
-- **Entity Extraction:** Uses spaCy's pre-trained model to extract entities.
-- **Relationship Identification:** Applies a simple heuristic to infer relationships between entities appearing in the same sentence.
-- **API Endpoint:** Built with FastAPI to facilitate development and testing.
-- **Custom NER Model Support:** A directory (`custom_ner_model`) is provided to support custom spaCy NER models.
-- **Testing:** The project follows TDD and BDD practices. Sample tests use the file `docs/ProjectPhoenixPlan.md` as input.
+- **Entity Extraction:**  
+  Uses spaCy’s pre-trained model (`en_core_web_md`) to extract entities. (Custom training is supported to improve accuracy.)
+  
+- **Relationship Identification:**  
+  Applies a simple heuristic to infer relationships between entities found in the same sentence, with a computed "strength" based on token distance.
+
+- **API Endpoint:**  
+  A file upload endpoint (`/upload-file`) built with FastAPI that accepts multipart/form-data.
+
+- **Custom NER Model Support:**  
+  A directory (`custom_ner_model`) is provided for custom model training, so you can improve entity recognition (e.g., ensuring that "São Paulo" is classified as a location and "2,000 employees" is recognized as employee count).
+
+- **Extensible and Modular Design:**  
+  The project follows DDD and SOLID principles, making it easy to swap out components (like using AWS Comprehend instead of spaCy) without affecting the rest of the system.
 
 ---
 
@@ -47,7 +58,7 @@ Below is the project structure:
 ├── Dockerfile
 ├── README.md
 ├── custom_ner_model
-│   └── (custom model files)
+│   └── (custom model files, config.cfg, training data, etc.)
 ├── docs
 │   └── ProjectPhoenixPlan.md
 ├── requirements.txt
@@ -100,23 +111,24 @@ This URL provides interactive API documentation (Swagger UI) where you can test 
 
 ### Endpoint
 
-**POST** `/extract`
+**POST** `/upoad-file`
+This endpoint accepts a file (plain text or Markdown) and optional form parameters.
 
-### Request Body
+### Form Data Fields
 
 The API expects a JSON object with the following fields:
-- **content** (string): The unstructured text or Markdown content.
-- **entity_types** (array of strings, optional): Specify entity types to filter (e.g., `["PERSON", "ORG"]`).
-- **relationship_threshold** (number, optional): A threshold for filtering weak relationships (for future enhancements).
+- **file**: The file to upload.
+- **entity_types (optional)**: A comma-separated list of entity types to filter (e.g., PERSON,ORG).
+- **relationship_threshold (optional)**: A number indicating the minimum relationship strength to consider. Default is 0.5.
 
-#### Sample Request
 
-```json
-{
-  "content": "Alice and Bob visited Paris. They met with Charlie in the city.",
-  "entity_types": null,
-  "relationship_threshold": 0.5
-}
+#### Sample Request using cURL
+
+```bash
+curl -X POST "http://localhost:8000/upload-file" \
+     -F "file=@docs/ProjectPhoenixPlan.md" \
+     -F "entity_types=PERSON,ORG" \
+     -F "relationship_threshold=0.5"
 ```
 
 ### Response
@@ -129,17 +141,20 @@ The API returns a JSON object with:
 ```json
 {
   "entities": [
-    { "name": "Alice", "type": "PERSON", "confidence": 1.0 },
-    { "name": "Bob", "type": "PERSON", "confidence": 1.0 },
-    { "name": "Paris", "type": "GPE", "confidence": 1.0 },
-    { "name": "Charlie", "type": "PERSON", "confidence": 1.0 }
+    { "name": "Expand Redwood Tech Solutions", "type": "ORG", "confidence": 1.0 },
+    { "name": "Michael Lansing", "type": "PERSON", "confidence": 1.0 },
+    { "name": "Sasha Petrov", "type": "PERSON", "confidence": 1.0 },
+    { "name": "Redwood City, California", "type": "GPE", "confidence": 1.0 },
+    { "name": "London", "type": "GPE", "confidence": 1.0 },
+    { "name": "Tokyo", "type": "GPE", "confidence": 1.0 },
+    { "name": "São Paulo", "type": "GPE", "confidence": 1.0 },
+    { "name": "Melbourne", "type": "GPE", "confidence": 1.0 }
+    // ... additional entities ...
   ],
   "relationships": [
-    { "source": "Alice", "target": "Bob", "relation": "related_to", "strength": 1.0 },
-    { "source": "Alice", "target": "Paris", "relation": "related_to", "strength": 0.5 },
-    { "source": "Bob", "target": "Paris", "relation": "related_to", "strength": 0.5 },
-    { "source": "Bob", "target": "Charlie", "relation": "related_to", "strength": 0.33 },
-    { "source": "Paris", "target": "Charlie", "relation": "related_to", "strength": 0.33 }
+    { "source": "Michael Lansing", "target": "Sasha Petrov", "relation": "related_to", "strength": 0.33 },
+    { "source": "London", "target": "Tokyo", "relation": "related_to", "strength": 0.25 },
+    // ... additional relationships ...
   ]
 }
 ```
