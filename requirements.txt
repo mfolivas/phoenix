@@ -1,8 +1,9 @@
 fastapi
 uvicorn
 pydantic
-spacy>=3.8.0
-https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.x.x/en_core_web_md-3.x.x.tar.gz#egg=en_core_web_md
+spacy
+en_core_web_md
+spacy-lookups-data
 pdfminer.six
 pytest
 pytest-cov

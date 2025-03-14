@@ -58,15 +58,16 @@ async def extract_entities(request: ExtractionRequest):
     Returns:
         ExtractionResponse: A response containing extracted entities and relationships.
     """
-    logger.info("Received extraction request.")
+    logger.info(f"Received extraction request: {request}")
     try:
         entities, relationships = extraction_service.extract(
             text=request.content,
             entity_types=request.entity_types,
             threshold=request.relationship_threshold
         )
-        logger.info("Extraction successful. Returning response.")
-        return ExtractionResponse(entities=entities, relationships=relationships)
+        response = ExtractionResponse(entities=entities, relationships=relationships)
+        logger.info(f"Extraction successful. Response: {response}")
+        return response
     except Exception as e:
         logger.error("Error during extraction: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
